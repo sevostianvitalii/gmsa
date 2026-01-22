@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gMSA Request Portal</title>
+    <meta name="description" content="Request MSA and gMSA accounts for Active Directory">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🔐</span>
+                    <span class="logo-text">gMSA Portal</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="request">📝 New Request</a>
+                <a href="#" class="nav-item" data-view="requests">📋 My Requests</a>
+                <a href="#" class="nav-item" data-view="scripts">💻 Scripts</a>
+                <a href="#" class="nav-item" data-view="docs">📚 Documentation</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- New Request View -->
+            <div id="requestView" class="view active">
+                <header class="content-header">
+                    <h1>Request Service Account</h1>
+                    <p class="subtitle">Create a new MSA or gMSA request</p>
+                </header>
+
+                <form id="gmsaRequestForm" class="request-form">
+                    <div class="form-progress">
+                        <div class="progress-step active" data-step="1"><span>1</span> Type</div>
+                        <div class="progress-step" data-step="2"><span>2</span> Info</div>
+                        <div class="progress-step" data-step="3"><span>3</span> Service</div>
+                        <div class="progress-step" data-step="4"><span>4</span> Hosts</div>
+                        <div class="progress-step" data-step="5"><span>5</span> Review</div>
+                    </div>
+
+                    <!-- Step 1: Account Type -->
+                    <section class="form-section" data-step="1">
+                        <h2>🔐 Account Type Selection</h2>
+                        <div class="account-type-cards">
+                            <label class="type-card">
+                                <input type="radio" name="accountType" value="msa" required>
+                                <div class="card-content">
+                                    <h3>MSA</h3>
+                                    <p>Managed Service Account</p>
+                                    <ul><li>Single server only</li><li>Auto password management</li></ul>
+                                </div>
+                            </label>
+                            <label class="type-card recommended">
+                                <span class="badge">Recommended</span>
+                                <input type="radio" name="accountType" value="gmsa" required>
+                                <div class="card-content">
+                                    <h3>gMSA</h3>
+                                    <p>Group Managed Service Account</p>
+                                    <ul><li>Multiple servers</li><li>Clusters & farms</li></ul>
+                                </div>
+                            </label>
+                        </div>
+                    </section>
+
+                    <!-- Step 2: Basic Information -->
+                    <section class="form-section hidden" data-step="2">
+                        <h2>📋 Basic Information</h2>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="accountName">Account Name (sAMAccountName) *</label>
+                                <input type="text" id="accountName" name="accountName" maxlength="15" 
+                                       pattern="^[a-zA-Z][a-zA-Z0-9-]{0,14}$" placeholder="e.g., svc-webapp01" required>
+                                <span class="helper-text">Max 15 chars, $ added automatically</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="displayName">Display Name *</label>
+                                <input type="text" id="displayName" name="displayName" 
+                                       placeholder="e.g., Web Application Service Account" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="description">Description / Business Justification *</label>
+                                <textarea id="description" name="description" rows="3" minlength="50" 
+                                          placeholder="Explain why this account is needed (min 50 chars)..." required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="requestorName">Requestor Name *</label>
+                                <input type="text" id="requestorName" name="requestorName" placeholder="Your full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="requestorEmail">Requestor Email *</label>
+                                <input type="email" id="requestorEmail" name="requestorEmail" placeholder="your.email@company.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="costCenter">Cost Center / Team *</label>
+                                <input type="text" id="costCenter" name="costCenter" placeholder="e.g., IT-12345" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="targetOU">Target OU *</label>
+                                <select id="targetOU" name="targetOU" required>
+                                    <option value="">Select OU...</option>
+                                    <option value="OU=ServiceAccounts,DC=domain,DC=com">OU=ServiceAccounts</option>
+                                    <option value="OU=gMSA,OU=ServiceAccounts,DC=domain,DC=com">OU=gMSA,OU=ServiceAccounts</option>
+                                    <option value="custom">Custom OU Path...</option>
+                                </select>
+                            </div>
+                            <div class="form-group hidden" id="customOUGroup">
+                                <label for="customOU">Custom OU Path *</label>
+                                <input type="text" id="customOU" name="customOU" placeholder="OU=Custom,DC=domain,DC=com">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Step 3: Service Configuration -->
+                    <section class="form-section hidden" data-step="3">
+                        <h2>⚙️ Service Configuration</h2>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="serviceType">Service Type *</label>
+                                <select id="serviceType" name="serviceType" required>
+                                    <option value="">Select service type...</option>
+                                    <option value="iis">IIS Application Pool</option>
+                                    <option value="sql">SQL Server Service</option>
+                                    <option value="windows-service">Windows Service</option>
+                                    <option value="scheduled-task">Scheduled Task</option>
+                                    <option value="custom">Custom / Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group gmsa-only">
+                                <label for="dnsHostname">DNS Hostname *</label>
+                                <input type="text" id="dnsHostname" name="dnsHostname" placeholder="e.g., webapp.domain.com">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="spns">Service Principal Names (SPNs)</label>
+                                <textarea id="spns" name="spns" rows="2" placeholder="HTTP/webapp.domain.com (one per line)"></textarea>
+                                <span class="helper-text">Optional. One SPN per line.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="passwordInterval">Password Change Interval (days)</label>
+                                <input type="number" id="passwordInterval" name="passwordInterval" min="1" max="365" value="30">
+                            </div>
+                            <div class="form-group">
+                                <label>Encryption Types *</label>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" name="encryptionTypes" value="AES256" checked> AES256</label>
+                                    <label><input type="checkbox" name="encryptionTypes" value="AES128" checked> AES128</label>
+                                    <label><input type="checkbox" name="encryptionTypes" value="RC4"> RC4 (Legacy)</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label><input type="checkbox" id="enableDelegation" name="enableDelegation"> Enable Kerberos Delegation</label>
+                            </div>
+                            <div class="form-group delegation-options hidden">
+                                <label for="delegationType">Delegation Type</label>
+                                <select id="delegationType" name="delegationType">
+                                    <option value="none">None</option>
+                                    <option value="constrained">Constrained Delegation</option>
+                                    <option value="resource-based">Resource-Based Constrained</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width delegation-options hidden">
+                                <label for="delegatedServices">Delegated Services (SPNs)</label>
+                                <textarea id="delegatedServices" name="delegatedServices" rows="2" 
+                                          placeholder="MSSQLSvc/sqlserver.domain.com:1433"></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Step 4: Target Hosts -->
+                    <section class="form-section hidden" data-step="4">
+                        <h2>🖥️ Target Hosts Configuration</h2>
+                        <div class="info-banner gmsa-only">
+                            ℹ️ For gMSA, specify a security group containing all computers that will use this account.
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group gmsa-only">
+                                <label for="securityGroupName">Security Group Name *</label>
+                                <input type="text" id="securityGroupName" name="securityGroupName" placeholder="e.g., grp-webapp-servers">
+                            </div>
+                            <div class="form-group gmsa-only">
+                                <label><input type="checkbox" id="createSecurityGroup" name="createSecurityGroup"> Create new security group</label>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="hostServers">Host Servers *</label>
+                                <div class="host-input-container">
+                                    <div class="host-tags" id="hostTags"></div>
+                                    <input type="text" id="hostServerInput" placeholder="Type server name and press Enter...">
+                                </div>
+                                <input type="hidden" id="hostServers" name="hostServers">
+                                <span class="helper-text">Enter FQDN or hostname. MSA: 1 host only. gMSA: multiple allowed.</span>
+                            </div>
+                        </div>
+                        <div class="msa-warning hidden">
+                            ⚠️ MSA can only be used on a single computer. Switch to gMSA for multiple servers.
+                        </div>
+                    </section>
+
+                    <!-- Step 5: Review -->
+                    <section class="form-section hidden" data-step="5">
+                        <h2>✅ Review Your Request</h2>
+                        <div class="review-container">
+                            <div class="review-card">
+                                <h3>Account Details</h3>
+                                <dl id="reviewAccountDetails"></dl>
+                            </div>
+                            <div class="review-card">
+                                <h3>Service Configuration</h3>
+                                <dl id="reviewServiceConfig"></dl>
+                            </div>
+                            <div class="review-card gmsa-only">
+                                <h3>Target Hosts</h3>
+                                <dl id="reviewTargetHosts"></dl>
+                            </div>
+                            <div class="review-card">
+                                <h3>PowerShell Script Preview</h3>
+                                <pre id="scriptPreview"><code></code></pre>
+                            </div>
+                        </div>
+                        <div class="acknowledgment">
+                            <label><input type="checkbox" id="confirmAccuracy" required> 
+                            I confirm all information is accurate and I am authorized to request this account.</label>
+                        </div>
+                    </section>
+
+                    <div class="form-navigation">
+                        <button type="button" class="btn btn-secondary" id="prevBtn" disabled>← Previous</button>
+                        <button type="button" class="btn btn-primary" id="nextBtn">Next →</button>
+                        <button type="submit" class="btn btn-success hidden" id="submitBtn">✓ Submit Request</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- My Requests View -->
+            <div id="requestsView" class="view hidden">
+                <header class="content-header">
+                    <h1>My Requests</h1>
+                    <p class="subtitle">Track your service account requests</p>
+                </header>
+                <div class="requests-table-container">
+                    <table class="requests-table">
+                        <thead><tr><th>ID</th><th>Account</th><th>Type</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+                        <tbody id="requestsTableBody"></tbody>
+                    </table>
+                    <div class="empty-state hidden" id="emptyRequests">
+                        <h3>No requests yet</h3>
+                        <p>Submit your first request to get started.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scripts View -->
+            <div id="scriptsView" class="view hidden">
+                <header class="content-header">
+                    <h1>PowerShell Scripts</h1>
+                    <p class="subtitle">Download prerequisite and verification scripts</p>
+                </header>
+                <div class="scripts-grid">
+                    <div class="script-card">
+                        <h3>🔍 Verify Prerequisites</h3>
+                        <p>Check AD environment readiness (KDS Root Key, domain level, etc.)</p>
+                        <button class="btn" onclick="downloadScript('prerequisites')">Download</button>
+                    </div>
+                    <div class="script-card">
+                        <h3>🔑 Create KDS Root Key</h3>
+                        <p>One-time setup for gMSA password generation.</p>
+                        <button class="btn" onclick="downloadScript('kds')">Download</button>
+                    </div>
+                    <div class="script-card">
+                        <h3>✓ Validate gMSA</h3>
+                        <p>Test if gMSA is correctly installed on target hosts.</p>
+                        <button class="btn" onclick="downloadScript('validate')">Download</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documentation View -->
+            <div id="docsView" class="view hidden">
+                <header class="content-header">
+                    <h1>Documentation</h1>
+                    <p class="subtitle">Learn about MSA and gMSA accounts</p>
+                </header>
+                <div class="docs-content">
+                    <section class="doc-section">
+                        <h2>What is a Managed Service Account?</h2>
+                        <p>A Managed Service Account (MSA) is an AD account for services with automatic password management.</p>
+                    </section>
+                    <section class="doc-section">
+                        <h2>MSA vs gMSA Comparison</h2>
+                        <table class="comparison-table">
+                            <tr><th>Feature</th><th>MSA</th><th>gMSA</th></tr>
+                            <tr><td>Multi-server</td><td>❌ No</td><td>✅ Yes</td></tr>
+                            <tr><td>Auto passwords</td><td>✅ Yes</td><td>✅ Yes</td></tr>
+                            <tr><td>Min domain level</td><td>2008 R2</td><td>2012</td></tr>
+                        </table>
+                    </section>
+                    <section class="doc-section">
+                        <h2>Prerequisites</h2>
+                        <ul>
+                            <li><strong>Domain Level:</strong> Windows Server 2012+ for gMSA</li>
+                            <li><strong>KDS Root Key:</strong> Must exist before creating gMSA</li>
+                            <li><strong>AD PowerShell Module:</strong> Required on management workstation</li>
+                            <li><strong>Permissions:</strong> Domain Admin or delegated rights</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="modal-overlay hidden" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header"><h3 id="modalTitle"></h3><button onclick="closeModal()">×</button></div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>

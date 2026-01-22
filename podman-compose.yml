@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  gmsa-portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gmsa-portal
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data:Z
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    security_opt:
+      - label=disable
