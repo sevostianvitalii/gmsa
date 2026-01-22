@@ -36,8 +36,13 @@ function initNavigation() {
 }
 
 function showView(viewName) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById(viewName + 'View').classList.add('active');
+    document.querySelectorAll('.view').forEach(v => {
+        v.classList.remove('active');
+        v.classList.add('hidden');
+    });
+    const activeView = document.getElementById(viewName + 'View');
+    activeView.classList.add('active');
+    activeView.classList.remove('hidden');
     if (viewName === 'requests') loadRequests();
 }
 

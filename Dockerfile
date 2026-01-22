@@ -1,5 +1,5 @@
 # Using quay.io registry instead of docker.io
-FROM quay.io/nodejs/node:18-alpine
+FROM public.ecr.aws/docker/library/node:18-alpine
 
 WORKDIR /app
 
